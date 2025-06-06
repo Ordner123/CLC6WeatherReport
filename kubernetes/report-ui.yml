@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-report
+  namespace: weather-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-reporter-ui
+  template:
+    metadata:
+      labels:
+        app: weather-reporter-ui
+    spec:
+      containers:
+      - name: weather-report-ui
+        image: weather-report-ui:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80

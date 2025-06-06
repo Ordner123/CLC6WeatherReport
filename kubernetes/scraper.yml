@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weather-scraper
+  namespace: weather-report
+spec:
+  schedule: "*/10 * * * *"  # every 10 minutes (adjust as needed)
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: weather-scraper
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: scraper
+            image: weather-scraper:latest
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: MONGO_URI
+              value: mongodb://mongodb.weather-report.svc.cluster.local:27017

@@ -23,12 +23,18 @@ def GetTafData(id: str) -> str:
 metarRaw = GetMetarData("LOWL")
 tafRaw = GetTafData("LOWL")
 
-
 metarParsed = parse_metar_conditions(metarRaw)
 print(metarRaw)
-output_metar_conditions(metarParsed)
+#output_metar_conditions(metarParsed)
 print("")
 tafParsed = parse_taf_conditions(tafRaw)
 print(tafRaw)
-output_taf_conditions(tafParsed)
+#output_taf_conditions(tafParsed)
+#print(metarParsed.to_dict())
+#print(tafParsed.to_dict())
 
+metar = MetarConditions.from_dict(metarParsed.to_dict())
+taf = TAFConditions.from_dict(tafParsed.to_dict())
+
+output_metar_conditions(metar)
+output_taf_conditions(taf)

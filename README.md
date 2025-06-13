@@ -1,4 +1,9 @@
 # Weather Report
+## Links:
+[https://github.com/Ordner123/CLC6WeatherReport](https://github.com/Ordner123/CLC6WeatherReport)
+
+[https://hub.docker.com/u/dortner](https://hub.docker.com/u/dortner)
+
 ## Run in minikube
 Prepeare Environment in windows:
 
@@ -61,6 +66,7 @@ Open UI: `minikube service weather-report-service -n weather-report`
 - In the deployment `imagePullPolicy: IfNotPresent` or `Always`
 - Building the docker image in the minikube `& minikube -p minikube docker-env --shell powershell | Invoke-Expression`
 - Last resort: `minikube image load weather-report-ui:latest`
+- Last last resort: Use Dockerhub
 
 ### Ingress not working
 - Run `minikube tunnel` to make the ingress available to localhost

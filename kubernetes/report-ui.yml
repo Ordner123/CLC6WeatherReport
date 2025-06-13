@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weather-report
+  name: weather-report-ui
   namespace: weather-report
 spec:
   replicas: 1
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: weather-report-ui
-        image: weather-report-ui:latest
-        imagePullPolicy: IfNotPresent
+        image: dortner/clc6-weather-report-ui:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80

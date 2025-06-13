@@ -6,10 +6,189 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <script>
+    const apiUrl = 'http://api.dortner.local';
+    let stations = [];
+    let tafData = [];
+    let metarData = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      init();
+    });
+
+    async function fetchTaf(codes, startTime) {
+      const response = await fetch(`${apiUrl}/taf/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          stations: codes,
+          startTime: startTime
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch TAF data');
+      }
+      return await response.json();
+    }
+
+    async function fetchMetar(codes, startTime) {
+      const response = await fetch(`${apiUrl}/metar/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          stations: codes,
+          startTime: startTime
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch TAF data');
+      }
+      return await response.json();
+    }
+
+    async function fetchStations() {
+      const response = await fetch(`${apiUrl}/stations`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch stations');
+      }
+      return await response.json();
+    }
+
+    async function displayStations() {
+      const stationList = document.getElementById('station-list');
+      const stationSelect = document.getElementById('query-station-select');
+      stationList.innerHTML = ''; // Clear existing list
+      stationSelect.innerHTML = ''; // Clear existing options
+      stations.forEach(station => {
+        // Update station list
+        const li = document.createElement('li');
+        li.textContent = `${station.code} - ${station.name}`;
+        li.dataset.code = station.code;
+        li.addEventListener('click', () => {
+          const codeInput = document.getElementById('station-code');
+          codeInput.value = station.code;
+        });
+        stationList.appendChild(li);
+
+        // Update station select dropdown
+        const option = document.createElement('option');
+        option.value = station.code;
+        option.textContent = `${station.code} - ${station.name}`;
+        stationSelect.appendChild(option);
+      });
+
+
+    }
+    
+    async function init() {
+      try {
+        stations = await fetchStations();
+        displayStations();
+      } catch (error) {
+        console.error('Error loading stations:', error);
+      }
+    }
+
+    async function insertStation() {
+      const codeInput = document.getElementById('station-code');
+      const nameInput = document.getElementById('station-name');
+      const code = codeInput.value.trim();
+      const name = nameInput.value.trim();
+
+      if (!code || !name) {
+        alert('Please enter both station code and name.');
+        return;
+      }
+
+      const newStation = { code, name };
+
+      await fetch(`${apiUrl}/station`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([newStation])
+      });
+
+      stations = await fetchStations();
+      displayStations();
+
+      // Clear inputs
+      codeInput.value = '';
+      nameInput.value = '';
+    }
+    
+    function getSelectedStationCodes() {
+      const select = document.getElementById('query-station-select');
+      return Array.from(select.selectedOptions).map(option => option.value);
+    }
+
+    function clearStartTime() {
+      document.getElementById('start-time').value = '';
+    }
+
+    async function loadWeather() {
+      const codes = getSelectedStationCodes();
+      if (codes.length === 0) {
+        alert("Please select at least one station.");
+        return;
+      }
+
+      const startTimeInput = document.getElementById('start-time').value;
+      const startTime = startTimeInput ? new Date(startTimeInput).toISOString() : null;
+
+      try {
+        const metars = await fetchMetar(codes, startTime);
+        const tafs = await fetchTaf(codes, startTime);
+
+        const metarDiv = document.getElementById('metar-output');
+        const tafDiv = document.getElementById('taf-output');
+
+        metarDiv.innerHTML = '<h3>Current conditions</h3>' + 
+          metars.map(m => `<p>${m.description}</p>`).join('');
+
+        tafDiv.innerHTML = '<h3>Forecasts</h3>' + 
+          tafs.map(t => `
+            <p><strong>${t.description}</strong><br/>
+            ${t.trends.map(trend => `${trend.description}`).join('<br/>')}</p>
+          `).join('');
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load weather data.");
+      }
+    }
+
+
+  </script>
+
   <div class="container">
-    <h1>🌤️ Weather Report UI</h1>
-    <p id="data">Loading...</p>
+    <h1>Stations</h1>
+    <input type="text" id="station-code" placeholder="Enter station code" />
+    <input type="text" id="station-name" placeholder="Enter station name" />
+    <button id="insert-station-button" onclick="insertStation()">Insert Station</button>
+    <ul id="station-list"></ul>
   </div>
-  <script src="script.js"></script>
+
+  <div class="container">
+    <h1>Weather Report</h1>
+    <label for="query-station-select">Select Stations:</label><br />
+    <select id="query-station-select" multiple size="6">
+      <!-- options will be dynamically inserted -->
+    </select>
+    <br />
+    <label for="start-time">Start Time (optional):</label><br />
+    <input type="datetime-local" id="start-time" />
+    <button type="button" onclick="clearStartTime()">Clear Start Time</button>
+    <br />
+
+    <button onclick="loadWeather()">Load METAR + TAF</button>
+
+    <div id="metar-output"></div>
+    <div id="taf-output"></div>
+  </div>
 </body>
 </html>

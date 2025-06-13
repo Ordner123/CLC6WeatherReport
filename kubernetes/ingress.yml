@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weather-report-ingress
+  namespace: weather-report
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: report.dortner.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: weather-report-service
+            port:
+              number: 80
+  - host: api.dortner.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: weather-api-service
+            port:
+              number: 8000 # specifies the port of the service, not the host

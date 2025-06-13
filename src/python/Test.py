@@ -37,4 +37,4 @@ metar = MetarConditions.from_dict(metarParsed.to_dict())
 taf = TAFConditions.from_dict(tafParsed.to_dict())
 
 output_metar_conditions(metar)
-output_taf_conditions(taf)
+#output_taf_conditions(taf)

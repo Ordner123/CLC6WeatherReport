@@ -11,6 +11,7 @@ mongo_uri = os.environ.get("MONGO_URI")
 if not mongo_uri:
     raise EnvironmentError("MONGO_URI not set in environment variables.")
 
+#mongo_uri = "mongodb://localhost:27017"  # Default for local MongoDB instance
 client = MongoClient(mongo_uri)
 db = client["aviation"]
 metar_collection = db["metar_conditions"]
@@ -18,16 +19,16 @@ taf_collection = db["taf_conditions"]
 
 def GetAirportCodes():
   # TODO: Load airport codes from a file or database
-  airport_codes = [
-    "LOWW", "LOWS", "LOWI", "LOWG", "LOWL", "LOWK",
-    "EDDM", "EDDF", "EHAM", "EGLL"
-  ]
-  return airport_codes
+  #airport_codes = [
+  #  "LOWW", "LOWS", "LOWI", "LOWG", "LOWL", "LOWK",
+  #  "EDDM", "EDDF", "EHAM", "EGLL"
+  #]
+  return [doc["code"] for doc in db["stations"].find({}, {"code": 1, "_id": 0})]
 
 def save_metar_to_db(metar_obj: MetarConditions):
     if metar_obj:
         metar_collection.replace_one(
-            {"station": metar_obj.station, "time": metar_obj.time},
+            {"station": metar_obj.station, "issueTime": metar_obj.issueTime},
             metar_obj.to_dict(),
             upsert=True
         )
@@ -56,18 +57,20 @@ def GetTafData(id: str) -> str:
   return text
 
 def main():
-  for airport_code in GetAirportCodes():
+  airport_codes = GetAirportCodes()
+  print(f"Found {len(airport_codes)} airport codes to process.")
+  for airport_code in airport_codes:
     try:
       metarRaw = GetMetarData(airport_code)
-      tafRaw = GetTafData(airport_code)
       metarParsed = parse_metar_conditions(metarRaw)
-      tafParsed = parse_taf_conditions(tafRaw)
-
       save_metar_to_db(metarParsed)
+      print(f"Processed METAR {airport_code}")
+      
+      tafRaw = GetTafData(airport_code)
+      tafParsed = parse_taf_conditions(tafRaw)
       save_taf_to_db(tafParsed)
-
+      print(f"Processed TAF   {airport_code}")
     except requests.RequestException as e:
       print(f"Error fetching data for {airport_code}: {e}") 
-
 if __name__ == "__main__":
   main()

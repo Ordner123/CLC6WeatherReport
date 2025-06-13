@@ -1,11 +1,28 @@
 from metar_taf_parser.parser.parser import MetarParser, FMValidity, TAFParser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+
+def strip_mongo_id(doc):
+    doc = dict(doc)
+    doc.pop("_id", None)
+    return doc
+
+class StationInfo:
+  def __init__(self, code=None, name=None):
+    self.code = code
+    self.name = name
+
+  def to_dict(self):
+    return {k: v for k, v in self.__dict__.items() if v is not None}
+
+  @staticmethod
+  def from_dict(data):
+    return StationInfo(**strip_mongo_id(data))
 
 class MetarConditions:
-  def __init__(self, station=None, time=None, windSpeed=None, windDirection=None,
+  def __init__(self, station=None, issueTime=None, windSpeed=None, windDirection=None,
                 windDegrees=None, temperature=None, dewPoint=None, visibility=None):
       self.station = station
-      self.time = time
+      self.issueTime = issueTime
       self.windSpeed = windSpeed
       self.windDirection = windDirection
       self.windDegrees = windDegrees
@@ -15,11 +32,11 @@ class MetarConditions:
 
   # Dictionary representation for easier output and storage
   def to_dict(self):
-    return self.__dict__
+    return {k: v for k, v in self.__dict__.items() if v is not None}
   
   @staticmethod
   def from_dict(data):
-      return MetarConditions(**data)
+      return MetarConditions(**strip_mongo_id(data))
 
 class TAFTrend:
   def __init__(self, validityStart=None, validityEnd=None, visibilityDistance=None,
@@ -34,7 +51,7 @@ class TAFTrend:
     self.windDegrees = windDegrees
 
   def to_dict(self):
-    return {
+    raw =  {
         "validityStart": self.validityStart,
         "validityEnd": self.validityEnd,
         "visibilityDistance": self.visibilityDistance,
@@ -43,10 +60,11 @@ class TAFTrend:
         "windDirection": self.windDirection,
         "windDegrees": self.windDegrees
     }
+    return {k: v for k, v in raw.items() if v is not None}
   
   @staticmethod
   def from_dict(data):
-      return TAFTrend(**data)
+      return TAFTrend(**strip_mongo_id(data))
 
 class TAFConditions:
   def __init__(self, station=None, issueTime=None, maxTemperature=None, minTemperature=None,
@@ -63,7 +81,7 @@ class TAFConditions:
     self.trends = trends or []
 
   def to_dict(self):
-    return {
+    raw =  {
         "station": self.station,
         "issueTime": self.issueTime,
         "maxTemperature": self.maxTemperature,
@@ -72,9 +90,10 @@ class TAFConditions:
         "windDirection": self.windDirection,
         "windDegrees": self.windDegrees,
         "visibility": self.visibility,
-        "trends": [trend.to_dict() for trend in self.trends]
+        "trends": [trend.to_dict() for trend in self.trends] if self.trends else []
     }
-  
+    return {k: v for k, v in raw.items() if v is not None}
+
   @staticmethod
   def from_dict(data):
      return TAFConditions(
@@ -94,7 +113,7 @@ def output_metar_conditions(conditions: 'MetarConditions'):
     print("No valid METAR conditions available.")
     return
   print(f"Station: {conditions.station}")
-  print(f"Time: {conditions.time}")
+  print(f"Issue Time: {conditions.issueTime}")
   print(f"Wind: {conditions.windDirection} ({conditions.windDegrees}°) at {conditions.windSpeed} kt")
   print(f"Temperature: {conditions.temperature}°C")
   print(f"Dew Point: {conditions.dewPoint}°C")
@@ -171,7 +190,20 @@ def parse_metar_conditions(s):
       return None
 
   conditions.station = metar.station
-  conditions.time = metar.time
+  conditions.issueTime = datetime.now()  # Use current time as issue time
+  if metar.time:
+    # metar.time is a datetime.time, set the time in conditions.issueTime
+    conditions.issueTime = conditions.issueTime.replace(
+      hour=metar.time.hour,
+      minute=metar.time.minute,
+      second=metar.time.second,
+      microsecond=0
+    )
+
+  if metar.day:
+    # If metar.day is provided, adjust the day in issueTime
+    conditions.issueTime = conditions.issueTime.replace(day=metar.day)
+
   conditions.windSpeed = metar.wind.speed
   conditions.windDirection = metar.wind.direction
   conditions.windDegrees = metar.wind.degrees

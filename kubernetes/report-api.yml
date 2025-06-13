@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-api
+  namespace: weather-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-report-api
+  template:
+    metadata:
+      labels:
+        app: weather-report-api
+    spec:
+      containers:
+      - name: weather-report-api
+        image: dortner/clc6-weather-report-api:latest
+        imagePullPolicy: Always
+        env:
+        - name: MONGO_URI
+          value: mongodb://mongodb.weather-report.svc.cluster.local:27017
+        ports:
+        - containerPort: 8000

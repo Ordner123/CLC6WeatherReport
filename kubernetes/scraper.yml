@@ -4,7 +4,7 @@ metadata:
   name: weather-scraper
   namespace: weather-report
 spec:
-  schedule: "*/10 * * * *"  # every 10 minutes (adjust as needed)
+  schedule: "*/5 * * * *"  # every 5 minutes (adjust as needed)
   jobTemplate:
     spec:
       template:
@@ -15,8 +15,8 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: scraper
-            image: weather-scraper:latest
-            imagePullPolicy: IfNotPresent
+            image: dortner/clc6-weather-report-scraper:latest
+            imagePullPolicy: Always
             env:
             - name: MONGO_URI
               value: mongodb://mongodb.weather-report.svc.cluster.local:27017

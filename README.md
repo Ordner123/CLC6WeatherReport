@@ -20,7 +20,7 @@ Add the following entries to your hosts file (`C:\Windows\System32\drivers\etc\h
 UI is available at `http://report.dortner.local`
 
 ## Architecture
-![Architecture Overview](Overview.png)
+![Architecture Overview](./images/Overview.png)
 
 Python is used in all backend code as it is quite easy to use. Furthermore, a Metar and TAF library is available.
 
@@ -65,3 +65,31 @@ Open UI: `minikube service weather-report-service -n weather-report`
 ### Ingress not working
 - Run `minikube tunnel` to make the ingress available to localhost
 - Ensure the `hosts` file contains the domains pointing to `127.0.0.1`
+
+## Screenshots
+Initial homepage:
+
+![Homepage](./images/Website.png)
+
+Rename of `LOWL` to `Linz Flughafen`
+
+![StationRename1](./images/StationRename1.png)
+
+![StationRename2](./images/StationRename2.png)
+
+New station `EDLW - Dortmund Airport`:
+
+![StationNew1](./images/StationNew1.png)
+
+![StationNew2](./images/StationNew2.png)
+
+Get single latest report:
+
+![Single](./images/Single1.png)
+
+Get single since yesterday:
+
+![Single](./images/SingleYester.png)
+
+Multiple: 
+![Multi](./images/Multi1.png)
